@@ -32,7 +32,78 @@ public class WikiPhilosophy {
         // some example code to get you started
 
 		String url = "https://en.wikipedia.org/wiki/Java_(programming_language)";
-		Elements paragraphs = wf.fetchWikipedia(url);
+		List<String> visitedURL = new ArrayList<String>();
+		
+		String nextURL = "";
+		int leftPar = 0;
+		int rightPar = 0;
+		Boolean nItalicized = false;
+
+		while(true){
+			visitedURL.add(url);
+			Elements paragraphs = wf.fetchWikipedia(url);
+			for (Element para: paragraphs){
+				Iterable<Node> iter = new WikiNodeIterable(para);
+				for (Node n: iter){
+
+					Node childPar = n.parent();
+					while (childPar != null && !nItalicized){
+						if (((Element) childPar).tagName().equals("i")){
+							if (childPar != null){
+								nItalicized = true;
+							}
+							else {
+								childPar = childPar.parent();
+							}
+						}
+						else{
+							childPar = childPar.parent();
+						}
+					}
+
+					if (n instanceof TextNode) {
+						String read = ((TextNode) n).text();
+						for (int i = 0; i < read.length(); i++) {
+							if (read.charAt(i) == '(') {
+								leftPar++;
+							} else if (read.charAt(i) == ')') {
+								rightPar++;
+							}
+						}
+					}
+
+					if (n instanceof Element){
+						if (((Element) n).tagName().equals("a")){
+							if (leftPar <= rightPar){
+								if (!nItalicized){
+									String addLink = ((Element) n).attr("href");
+									if (addLink.length() > 6 && addLink.substring(0,6).equals("/wiki/")){
+										nextURL = "https://en.wikipedia.org" + addLink;
+										url = nextURL;
+									}
+								}
+							}
+						}
+					}
+
+				}	
+			}
+
+
+			if (url.equals("https://en.wikipedia.org/wiki/Philosophy")) {
+				int clicks = visitedURL.size()+1;
+				System.out.println("We have reached the Philosophy page in" + clicks + " clicks!");
+				return;
+			}
+			if (url == null || visitedURL.contains(url)) {
+				System.out.println("We cannot reach the Philosophy page");
+				return;
+			}
+
+		}
+
+
+	/**	Elements paragraphs = wf.fetchWikipedia(url);
 
 		Element firstPara = paragraphs.get(0);
 		
@@ -41,11 +112,11 @@ public class WikiPhilosophy {
 			if (node instanceof TextNode) {
 				System.out.print(node);
 			}
-        }
+        }**/
 
         // the following throws an exception so the test fails
         // until you update the code
-        String msg = "Complete this lab by adding your code and removing this statement.";
-        throw new UnsupportedOperationException(msg);
+        //String msg = "Complete this lab by adding your code and removing this statement.";
+        //throw new UnsupportedOperationException(msg);
 	}
 }
